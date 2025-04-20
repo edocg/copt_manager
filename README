@@ -1,0 +1,65 @@
+BLOCk chain de COPT
+para probar la primera versión de endpoints, se puede usar curl por
+consola o Postman de la siguiente manera.
+
+1. Para agregar residente
+curl -X POST http://localhost:8080/add_resident \
+  -H "Content-Type: application/json" \
+  -d '{"id":1,"name":"Andrea","wallet":"wallet001"}'
+
+2. Para registrar un pago
+curl -X POST http://localhost:8080/charge \
+  -H "Content-Type: application/json" \
+  -d '{"id":1,"amount":100000}'
+
+3. para consultar un reporte
+curl "http://localhost:8080/report?id=1"
+
+Probar que se protegn los endpoint,
+primero probemos la protección del endpoint /login
+Para probar el endpoint login haz la siguiente solicitud
+
+1. curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1, "name": "Andrea"}'
+
+si el residente existe y el nombre coincide, obtendrás:
+
+{ "token": "eyJhbGciOiJIUzI1NiIsInR..." }
+
+Luego probar /report con el token obtenido, así:
+
+curl -H "Authorization: Bearer TU_TOKEN_AQUI" http://localhost:8080/report?id=1
+
+Proteger el endpoint /charge para que solo un residente autenticado pueda registrar su propio pago usando el token JWT.
+
+Primero generar un Token con Login y luego llamar al endpoint con el token en el header de la request:
+curl -X POST http://localhost:8080/charge \
+  -H "Authorization: Bearer TU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1, "amount": 5000}'
+
+Para proteger el endpoint /add_resident para que solo un 
+administrador pueda agregar residentes. Se debe introducir
+el concepto de rol dentro de JWT: admin. Y solo quien tenga
+este rol podrá agregar residentes.
+
+para probar esto, necesitas generar un token con el rol "admin".
+
+de forma temporal en main() llama a:
+let token = auth::generate_token(
+    999, 
+    "admin".to_string(), 
+    "admin".to_string()
+);
+println!("Token admin: {}", token);
+
+Y luego prueba el endpoint /add_resident con ese token:
+curl -X POST http://localhost:8080/add_resident \
+  -H "Authorization: Bearer TU_TOKEN_ADMIN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{"id": 3, "name": "Nuevo", "wallet": "direccion"}'
+
+
+para visualizar el contenido de blockchain.json puedes ingresar
+a htttp://localhost:8080/blockchain
